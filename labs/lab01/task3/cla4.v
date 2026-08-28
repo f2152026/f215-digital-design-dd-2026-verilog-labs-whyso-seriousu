@@ -19,97 +19,65 @@
 // TODO -- Step 3: sum bits
 //   sum[i] = p[i] ^ c[i]     (c0 = cin)
 
-// cla4.v
-
 module cla4(
-
   input  [3:0] a,
   input  [3:0] b,
   input        cin,
   output [3:0] sum,
   output       cout
-
 );
 
   wire p0, p1, p2, p3;
   wire g0, g1, g2, g3;
+  wire c1, c2, c3;
 
-  wire c1, c2, c3, c4;
+  // TODO: your gate-level P/G, carry, and sum logic goes here.
+  // (cout should be connected to c4.) Remember the delay on every gate.
 
-  // Intermediate wires for carry equations
-  wire t10;
-  wire t20, t21, t22;
-  wire t30, t31, t32, t33;
-  wire t40, t41, t42, t43, t44;
-
-  // ------------------------------------------------
-  // Step 1: Generate and Propagate
-  // ------------------------------------------------
-
+  // Step 1: Generate (g) and Propagate (p) signals
   xor #(2) (p0, a[0], b[0]);
-  xor #(2) (p1, a[1], b[1]);
-  xor #(2) (p2, a[2], b[2]);
-  xor #(2) (p3, a[3], b[3]);
-
   and #(2) (g0, a[0], b[0]);
+
+  xor #(2) (p1, a[1], b[1]);
   and #(2) (g1, a[1], b[1]);
+
+  xor #(2) (p2, a[2], b[2]);
   and #(2) (g2, a[2], b[2]);
+
+  xor #(2) (p3, a[3], b[3]);
   and #(2) (g3, a[3], b[3]);
 
+  // Step 2: Direct carry equations using multi-input AND/OR primitives
+  // Intermediate terms for carry c1
+  wire c1_term0;
+  and #(2) (c1_term0, p0, cin);
+  or  #(2) (c1, g0, c1_term0);
 
-  // ------------------------------------------------
-  // Step 2: Carry Lookahead Equations
-  // ------------------------------------------------
+  // Intermediate terms for carry c2
+  wire c2_term0, c2_term1;
+  and #(2) (c2_term0, p1, g0);
+  and #(2) (c2_term1, p1, p0, cin);
+  or  #(2) (c2, g1, c2_term0, c2_term1);
 
-  // c1 = g0 + p0.cin
+  // Intermediate terms for carry c3
+  wire c3_term0, c3_term1, c3_term2;
+  and #(2) (c3_term0, p2, g1);
+  and #(2) (c3_term1, p2, p1, g0);
+  and #(2) (c3_term2, p2, p1, p0, cin);
+  or  #(2) (c3, g2, c3_term0, c3_term1, c3_term2);
 
-  and #(2) (t10, p0, cin);
-  or  #(2) (c1, g0, t10);
+  // Intermediate terms for carry cout (c4)
+  wire c4_term0, c4_term1, c4_term2, c4_term3;
+  and #(2) (c4_term0, p3, g2);
+  and #(2) (c4_term1, p3, p2, g1);
+  and #(2) (c4_term2, p3, p2, p1, g0);
+  and #(2) (c4_term3, p3, p2, p1, p0, cin);
+  or  #(2) (cout, g3, c4_term0, c4_term1, c4_term2, c4_term3);
 
-
-  // c2 = g1 + p1.g0 + p1.p0.cin
-
-  and #(2) (t20, p1, g0);
-  and #(2) (t21, p1, p0, cin);
-  or  #(2) (c2, g1, t20, t21);
-
-
-  // c3 = g2 + p2.g1 + p2.p1.g0 + p2.p1.p0.cin
-
-  and #(2) (t30, p2, g1);
-  and #(2) (t31, p2, p1, g0);
-  and #(2) (t32, p2, p1, p0, cin);
-  or  #(2) (c3, g2, t30, t31, t32);
-
-
-  // c4 = g3 + p3.g2 + p3.p2.g1
-  //      + p3.p2.p1.g0 + p3.p2.p1.p0.cin
-
-  and #(2) (t40, p3, g2);
-  and #(2) (t41, p3, p2, g1);
-  and #(2) (t42, p3, p2, p1, g0);
-  and #(2) (t43, p3, p2, p1, p0, cin);
-
-  or #(2) (c4, g3, t40, t41, t42, t43);
-
-
-  // ------------------------------------------------
-  // Step 3: Sum
-  // ------------------------------------------------
-
-  // sum[0] = p0 ^ cin
+  // Step 3: Compute sum bits (sum[i] = p[i] ^ c[i])
   xor #(2) (sum[0], p0, cin);
-
-  // sum[1] = p1 ^ c1
   xor #(2) (sum[1], p1, c1);
-
-  // sum[2] = p2 ^ c2
   xor #(2) (sum[2], p2, c2);
-
-  // sum[3] = p3 ^ c3
   xor #(2) (sum[3], p3, c3);
-
-  // Final carry
-  assign #(2) cout = c4;
 
 endmodule
