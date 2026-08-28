@@ -17,43 +17,32 @@
 //   endgenerate
 //   assign cout = c[64];
 
-// rca64.v
-// 64-bit Ripple Carry Adder
-
 module rca64(
-
   input  [63:0] a,
   input  [63:0] b,
   input         cin,
   output [63:0] sum,
   output        cout
-
 );
 
-  // Carry wires
+  // Internal carry vector: c[0] is input cin, c[64] is final cout
   wire [64:0] c;
 
-  // Initial carry
-  assign #(2) c[0] = cin;
+  assign c[0] = cin;
 
-  // Generate 64 full adders
   genvar i;
-
   generate
     for (i = 0; i < 64; i = i + 1) begin : gen_fa
-
       FA_Gate FA (
-        .a(a[i]),
-        .b(b[i]),
-        .cin(c[i]),
-        .sum(sum[i]),
+        .a   (a[i]),
+        .b   (b[i]),
+        .cin (c[i]),
+        .sum (sum[i]),
         .cout(c[i+1])
       );
-
     end
   endgenerate
 
-  // Final carry
-  assign #(2) cout = c[64];
+  assign cout = c[64];
 
 endmodule
